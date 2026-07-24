@@ -11,7 +11,7 @@
 
 ## Current stage
 
-The current stage is **data feasibility audit specification and preparation**. Audit code, full-data results, recommendation models, and experiment results have not yet been produced.
+The current stage is **data feasibility audit implementation and validation**. The modular audit entry point and a bounded, explicitly non-evidentiary smoke run have been validated. The full-data audit, recommendation models, and experiment results have not yet been produced.
 
 ## RetailRocket data files
 
@@ -44,13 +44,26 @@ industrial-recsys-pipeline/
 
 ## Running
 
-The audit entry point is planned as:
+The full-data audit entry point is:
 
 ```bash
 python -m src.data_audit.run_audit --data-dir data/raw --output-dir reports
 ```
 
-This command is a placeholder until the phase 3 implementation and smoke tests are complete.
+Do not run the full-data command until the implementation's cross-chunk memory and exactness risks have been reviewed.
+
+A bounded pipeline smoke test can be run without producing formal evidence:
+
+```bash
+python -m src.data_audit.run_audit \
+  --data-dir data/raw \
+  --output-dir data/tmp/smoke_audit \
+  --chunk-size 5000 \
+  --max-rows-per-file 25000 \
+  --fingerprint-mode metadata
+```
+
+Any use of `--max-rows-per-file` marks all generated artifacts as `smoke_non_evidentiary`. Such outputs validate the pipeline only and must not support dataset or recommendation-module conclusions.
 
 ## Status
 
@@ -58,10 +71,11 @@ This command is a placeholder until the phase 3 implementation and smoke tests a
 
 - Repository initialization rules and local-data ignore policy.
 - Detailed data-audit specification for phases 3–5.
+- Modular audit foundation, automated unit tests, and a bounded smoke run.
 
 ### In development
 
-- Data feasibility audit implementation and validation design.
+- Scalable full-data aggregation, exact cross-chunk reconciliation, and feasibility-matrix generation.
 
 ### Planned
 
