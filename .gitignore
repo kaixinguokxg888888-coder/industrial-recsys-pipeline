@@ -1,0 +1,29 @@
+# Local datasets and generated intermediates
+data/raw/
+data/interim/
+data/processed/
+data/tmp/
+*.parquet
+*.pkl
+*.joblib
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and disposable workspace files
+*.log
+tmp/
+
+# Final audit artifacts under reports/ are intentionally not ignored.

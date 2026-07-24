@@ -1,0 +1,9 @@
+# Planned phase 3 data-audit runtime
+numpy>=1.26
+pandas>=2.2
+pyarrow>=15
+psutil>=5.9
+
+# Reporting and validation
+matplotlib>=3.8
+pytest>=8.0
