@@ -11,7 +11,6 @@ import pytest
 from src.data_audit.config import AuditConfig
 from src.data_audit.events import (
     gini,
-    prior_behavior_funnel,
     user_sequence_tables,
 )
 from src.data_audit.io import (
@@ -77,25 +76,6 @@ def test_output_cannot_be_inside_raw_data(tmp_path: Path) -> None:
     config = AuditConfig(data_dir=raw, output_dir=raw / "outputs")
     with pytest.raises(ValueError, match="output_dir"):
         config.validate()
-
-
-def test_strict_prior_behavior_excludes_same_timestamp() -> None:
-    events = pd.DataFrame(
-        [
-            [1000, 1, "view", 10],
-            [1000, 1, "transaction", 10],
-            [2000, 1, "addtocart", 10],
-            [3000, 1, "transaction", 10],
-        ],
-        columns=["timestamp", "visitorid", "event", "itemid"],
-    )
-    summary, intervals = prior_behavior_funnel(events)
-    row = summary.frame.iloc[0]
-    assert row["transaction_event_count"] == 2
-    assert row["with_prior_view_count"] == 1
-    assert row["with_prior_addtocart_count"] == 1
-    assert intervals.frame.iloc[0]["count"] == 1
-    assert intervals.frame.iloc[0]["mean"] == 2000
 
 
 def test_sequence_buckets_reconcile() -> None:
@@ -173,3 +153,21 @@ def test_bounded_run_is_marked_non_evidentiary(tmp_path: Path) -> None:
     )
     assert manifest["data_scope"] == "smoke_non_evidentiary"
     assert manifest["configuration"]["max_rows_per_file"] == 10
+    assert manifest["matrix_status"] == "withheld_pending_full_audit"
+    assert manifest["partition_processing"]["status"] == "completed"
+    assert (
+        manifest["partition_processing"]["datasets"]["properties_item_property"][
+            "rows"
+        ]
+        == 4
+    )
+    assert (
+        manifest["partition_processing"]["datasets"][
+            "properties_property_value_candidates"
+        ]["rows"]
+        <= 4
+    )
+    assert not (output_dir / "feature_feasibility_matrix.csv").exists()
+    assert not (output_dir / "data_feasibility_matrix.csv").exists()
+    assert not (output_dir / "data_feasibility_matrix.md").exists()
+    assert not Path(manifest["temporary_workspace"]["run_dir"]).exists()

@@ -31,6 +31,10 @@ class AuditConfig:
     data_dir: Path
     output_dir: Path
     chunk_size: int = 100_000
+    partition_count: int = 64
+    temp_dir: Path = Path("data/tmp/data_audit")
+    keep_temp: bool = False
+    max_memory_mb: int | None = None
     max_rows_per_file: int | None = None
     fingerprint_mode: FingerprintMode = "sha256"
 
@@ -53,10 +57,19 @@ class AuditConfig:
 
         if self.chunk_size <= 0:
             raise ValueError("chunk_size must be positive")
+        if self.partition_count <= 0:
+            raise ValueError("partition_count must be positive")
+        if self.max_memory_mb is not None and self.max_memory_mb <= 0:
+            raise ValueError("max_memory_mb must be positive when provided")
         if self.max_rows_per_file is not None and self.max_rows_per_file <= 0:
             raise ValueError("max_rows_per_file must be positive when provided")
 
         raw_dir = self.data_dir.resolve()
         output_dir = self.output_dir.resolve()
+        temp_dir = self.temp_dir.resolve()
         if output_dir == raw_dir or raw_dir in output_dir.parents:
             raise ValueError("output_dir must not be data/raw or a child of it")
+        if temp_dir == raw_dir or raw_dir in temp_dir.parents:
+            raise ValueError("temp_dir must not be data/raw or a child of it")
+        if raw_dir == temp_dir or temp_dir in raw_dir.parents:
+            raise ValueError("temp_dir must not contain data/raw")

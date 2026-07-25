@@ -11,7 +11,7 @@
 
 ## Current stage
 
-The current stage is **data feasibility audit implementation and validation**. The modular audit entry point and a bounded, explicitly non-evidentiary smoke run have been validated. The full-data audit, recommendation models, and experiment results have not yet been produced.
+The current stage is **partitioned data feasibility audit implementation and validation**. Stable disk partitioning, exact duplicate comparison, partitioned user-item funnel processing, partitioned item-property aggregation, and bounded non-evidentiary smoke runs have been validated. The formal full-data audit, recommendation models, and experiment results have not yet been produced.
 
 ## RetailRocket data files
 
@@ -57,13 +57,20 @@ A bounded pipeline smoke test can be run without producing formal evidence:
 ```bash
 python -m src.data_audit.run_audit \
   --data-dir data/raw \
-  --output-dir data/tmp/smoke_audit \
-  --chunk-size 5000 \
-  --max-rows-per-file 25000 \
+  --output-dir data/tmp/partitioned_smoke_audit \
+  --chunk-size 100000 \
+  --partition-count 16 \
+  --temp-dir data/tmp/data_audit \
+  --max-memory-mb 1024 \
+  --max-rows-per-file 100000 \
   --fingerprint-mode metadata
 ```
 
 Any use of `--max-rows-per-file` marks all generated artifacts as `smoke_non_evidentiary`. Such outputs validate the pipeline only and must not support dataset or recommendation-module conclusions.
+
+## Data Audit Architecture
+
+See [Data Audit Data Flow](docs/architecture/data_audit_dataflow.md) for the implemented chunked reading, stable hash partitioning, exact aggregation, evidence generation, and formal-result publication flow.
 
 ## Status
 
@@ -71,11 +78,14 @@ Any use of `--max-rows-per-file` marks all generated artifacts as `smoke_non_evi
 
 - Repository initialization rules and local-data ignore policy.
 - Detailed data-audit specification for phases 3–5.
-- Modular audit foundation, automated unit tests, and a bounded smoke run.
+- Modular audit foundation, automated unit tests, and bounded smoke runs.
+- Stable Parquet partitioning with exact original-field duplicate comparison.
+- Partitioned user-item funnel and item-property temporal aggregation.
+- Evidence-gated feature and module feasibility matrix generators.
 
 ### In development
 
-- Scalable full-data aggregation, exact cross-chunk reconciliation, and feasibility-matrix generation.
+- Formal full-data execution, result verification, and evidence-backed matrix publication.
 
 ### Planned
 

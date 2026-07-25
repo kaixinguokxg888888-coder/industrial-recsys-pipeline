@@ -8,6 +8,7 @@ from typing import Any, Iterable
 
 from .config import AuditConfig
 from .evidence import EvidenceTable
+from .matrices import write_formal_matrices
 
 
 def write_artifacts(
@@ -21,9 +22,10 @@ def write_artifacts(
     tables_dir = config.output_dir / "tables"
     tables_dir.mkdir(parents=True, exist_ok=True)
 
+    table_list = list(tables)
     written: list[Path] = []
     table_index: list[dict[str, str | int]] = []
-    for table in tables:
+    for table in table_list:
         annotated = table.annotated(config.data_scope)
         output_path = tables_dir / f"{table.evidence_id.lower()}.csv"
         annotated.to_csv(output_path, index=False)
@@ -39,9 +41,37 @@ def write_artifacts(
             }
         )
 
+    if config.is_smoke:
+        matrix_status_path = config.output_dir / "matrix_generation_status.json"
+        matrix_status_path.write_text(
+            json.dumps(
+                {
+                    "data_scope": config.data_scope,
+                    "status": "withheld_pending_full_audit",
+                    "formal_matrix_files_written": False,
+                    "reason": (
+                        "Formal feature and module conclusions require complete "
+                        "full-data evidence."
+                    ),
+                },
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
+        written.append(matrix_status_path)
+        matrix_status = "withheld_pending_full_audit"
+    else:
+        written.extend(
+            write_formal_matrices(config.output_dir, table_list, config.data_scope)
+        )
+        matrix_status = "formal_full_data_matrices_written"
+
     manifest = dict(manifest)
     manifest["data_scope"] = config.data_scope
     manifest["tables"] = table_index
+    manifest["matrix_status"] = matrix_status
     manifest_path = config.output_dir / "audit_manifest.json"
     manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True),
